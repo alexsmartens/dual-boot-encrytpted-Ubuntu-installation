@@ -1,0 +1,22 @@
+## Links 
+https://www.medo64.com/2020/04/installing-uefi-zfs-root-on-ubuntu-20-04/
+https://help.ubuntu.com/community/Full_Disk_Encryption_Howto_2019
+https://linsomniac.gitlab.io/post/2020-04-09-ubuntu-2004-encrypted-zfs/
+
+
+$ sudo -i
+
+# POOL=rpool
+# HOST=media-hub
+# USER=user
+# DISK=/dev/sda
+
+# sgdisk --zap-all $DISK
+
+
+# sgdisk --new=1:0:+2000M $DEV
+# sgdisk --new=2:0:+512M $DEV
+# sgdisk --new=3:0:+92000M $DEV
+# sgdisk --typecode=1:8301 --typecode=2:ef02 --typecode=3:ef00 --typecode=5:8301 $DEV
+# sgdisk --change-name=1:/boot --change-name=2:GRUB --change-name=3:EFI-SP --change-name=5:rootfs $DEV
+
