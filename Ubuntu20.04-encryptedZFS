@@ -4,19 +4,40 @@ https://help.ubuntu.com/community/Full_Disk_Encryption_Howto_2019
 https://linsomniac.gitlab.io/post/2020-04-09-ubuntu-2004-encrypted-zfs/
 
 
-$ sudo -i
+sudo -i
 
-# POOL=rpool
-# HOST=media-hub
-# USER=user
-# DISK=/dev/sda
+POOL=rpool
+HOST=media-hub
+USER=user
+DISK=/dev/sda
 
-# sgdisk --zap-all $DISK
+sgdisk --zap-all $DISK
 
 
-# sgdisk --new=1:0:+2000M $DEV
-# sgdisk --new=2:0:+512M $DEV
-# sgdisk --new=3:0:+92000M $DEV
-# sgdisk --typecode=1:8301 --typecode=2:ef02 --typecode=3:ef00 --typecode=5:8301 $DEV
-# sgdisk --change-name=1:/boot --change-name=2:GRUB --change-name=3:EFI-SP --change-name=5:rootfs $DEV
+sgdisk --new=1:0:+2000M $DISK
+sgdisk --new=2:0:+512M $DISK
+sgdisk --new=3:0:+92160M $DISK
+sgdisk --typecode=1:8301 --typecode=2:ef00 --typecode=3:8301 $DISK
+sgdisk --change-name=1:/boot --change-name=2:EFI-SP --change-name=3:rootfs $DISK
+sgdisk --print $DISK
+
+zpool create -f \
+-o ashift=12 \
+-O acltype=posixacl \
+-O canmount=off \
+-O compression=lz4 \
+-O dnodesize=auto \
+-O encryption=aes-256-gcm \
+-O keylocation=prompt \
+-O keyformat=passphrase \
+-O mountpoint=/ \
+-O normalization=formD \
+-O relatime=on \
+-O recordsize=1M \
+-O sync=disabled \
+-O xattr=sa \
+-R /mnt/install $POOL ${DISK}3
+
+mkfs.ext4 ${DISK}1
+
 
