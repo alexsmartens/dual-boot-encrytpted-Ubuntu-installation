@@ -138,7 +138,8 @@ After=zfs-import.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/bin/zfs load-key -a
+#ExecStart=/usr/bin/zfs load-key -a
+ExecStart=/usr/bin/bash -c 'echo pwd:$(pwd) root:  $(ls /)'
 
 [Install]
 WantedBy=zfs-mount.service
