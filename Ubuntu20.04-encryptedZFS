@@ -1,5 +1,4 @@
 ## Links 
-https://www.medo64.com/2020/04/installing-uefi-zfs-root-on-ubuntu-20-04/
 https://help.ubuntu.com/community/Full_Disk_Encryption_Howto_2019
 https://linsomniac.gitlab.io/post/2020-04-09-ubuntu-2004-encrypted-zfs/
 # Mounting ZFS pools 
@@ -8,6 +7,7 @@ https://www.cyberciti.biz/faq/freebsd-linux-unix-zfs-automatic-mount-points-comm
 https://serverfault.com/questions/972496/can-i-encrypt-a-whole-pool-with-zfsol-0-8-1
 https://www.youtube.com/watch?v=oYm4iYu2ugY
 
+https://www.medo64.com/2020/04/installing-uefi-zfs-root-on-ubuntu-20-04/
 https://github.com/dynerose/Remote-unlock-native-ZFS/blob/bef71dc4df0e39d41d3a8e26bed5a86d28c7d44a/install.bash
 https://github.com/chungy/zfs-boottime-encryption/blob/dcf2a40cc1fa7d579b54edda3322e482c31ead03/README.adoc
 
@@ -42,7 +42,9 @@ sgdisk --print $DISK
 
 # Step 1 of adding the key to $POOL
 dd if=/dev/random of=./${POOL}.key bs=1 count=32
-KEY_TEMP_ADDRESS=$(pwd)/${POOL}.key
+KEY_TEMP_ADDRESS=file://$(pwd)/${POOL}.key
+zfs get keylocation $POOL
+
 
 
 zpool create -f \
@@ -63,9 +65,6 @@ zpool create -f \
 -R $INSTALL_DIR $POOL ${DISK}3
 
 zpool list
-
-
-# 2. OS Installation
 
 zfs create -o canmount=noauto -o mountpoint=/ $POOL/root
 zfs mount $POOL/root
@@ -89,7 +88,7 @@ debootstrap $INCLUDES focal $INSTALL_DIR
 zfs set devices=off $POOL
 
 
-# 3 OS Configuration
+# 2 OS Configuration
 
 echo $HOST > /mnt/install/etc/hostname
 sed "s/ubuntu/$HOST/" /etc/hosts > ${INSTALL_DIR}etc/hosts
@@ -99,6 +98,11 @@ cp /etc/netplan/*.yaml ${INSTALL_DIR}/etc/netplan/
 mount --rbind /dev  ${INSTALL_DIR}dev
 mount --rbind /proc ${INSTALL_DIR}proc
 mount --rbind /sys  ${INSTALL_DIR}sys
+
+# Step 2 of adding the key to $POOL
+# cp $(pwd)/${POOL}.key ${INSTALL_DIR}${POOL}.key
+cp $(pwd)/${POOL}.key ${INSTALL_DIR}boot/${POOL}.key
+
 
 chroot ${INSTALL_DIR} /usr/bin/env \
 DISK=$DISK POOL=$POOL USER=$USER INSTALL_DIR=$INSTALL_DIR \
@@ -126,6 +130,29 @@ echo "PARTUUID=$(blkid -s PARTUUID -o value ${DISK}1) \
 echo "PARTUUID=$(blkid -s PARTUUID -o value ${DISK}2) \
 /boot/efi vfat noatime,nofail,x-systemd.device-timeout=1 0 1" >> /etc/fstab
 cat /etc/fstab
+
+# Step 3 of adding the key to $POOL
+KEY_ADDRESS=file://$(pwd)/boot/${POOL}.key
+zfs change-key -o keyformat=raw -o keylocation=$KEY_ADDRESS $POOL
+zfs get keylocation $POOL
+# cat > /etc/systemd/system/zfs-load-key.service <<EOF
+[Unit]
+Description=Load encryption keys
+DefaultDependencies=false
+Before=zfs-mount.service
+After=zfs-import.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/zfs load-key -a
+
+[Install]
+WantedBy=zfs-mount.service
+EOF
+
+
+systemctl enable zfs-load-key.service
 
 sudo systemctl list-unit-files | grep zfs
 
@@ -159,8 +186,7 @@ grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubunt
 # Install GUI
 tasksel install ubuntu-desktop
 
-adduser --quiet --disabled-password --shell /bin/bash --home /home/$USER --gecos "User" $USER 
-# echo "$USER:???MY_PASSWORD???" | chpasswd 
+adduser $USER
 addgroup $USER sudo
 
 
