@@ -18,6 +18,15 @@ POOL=rpool
 HOST=media-hub
 USER=user
 DISK=/dev/sda
+INSTALL_DIR=/mnt/install/
+
+
+apt-add-repository universe 
+apt install --yes debootstrap gdisk dkms dpkg-dev
+apt install --yes zfs-dkms zfsutils-linux
+
+
+# 1. Partitioning
 
 sgdisk --zap-all $DISK
 
@@ -44,99 +53,111 @@ zpool create -f \
 -O recordsize=1M \
 -O sync=disabled \
 -O xattr=sa \
--R /mnt/install $POOL ${DISK}3
+-R $INSTALL_DIR $POOL ${DISK}3
+
+zpool list
+
+
+# 2. OS Installation
 
 zfs create -o canmount=noauto -o mountpoint=/ $POOL/root
 zfs mount $POOL/root
-zfs get mounted $POOL/root
-
-zfs create -o canmount=noauto $POOL/var
-zfs set com.ubuntu.zsys:bootfs='no' $POOL/var
-zfs mount $POOL/var
-zfs get mounted $POOL/var
-
 
 yes | mkfs.ext4 ${DISK}1
-mkdir /mnt/install/boot
-mount ${DISK}1 /mnt/install/boot/
+mkdir ${INSTALL_DIR}boot
+mount ${DISK}1 ${INSTALL_DIR}boot/
+
 
 mkfs.msdos -F 32 -n EFI ${DISK}2
-mkdir /mnt/install/boot/efi
-mount ${DISK}2 /mnt/install/boot/efi
+mkdir ${INSTALL_DIR}boot/efi
+mount ${DISK}2 ${INSTALL_DIR}boot/efi
 
-apt install --yes debootstrap
-debootstrap focal /mnt/install/
+# Datasets
+zfs create -o mountpoint=/home ${POOL}/home
+zfs create ${POOL}/var
+
+
+INCLUDES='--include tzdata,wget,nano'
+debootstrap $INCLUDES focal $INSTALL_DIR 
 zfs set devices=off $POOL
-sed "s/ubuntu/$HOST/" /etc/hosts > /mnt/install/etc/hosts
-cp /etc/netplan/*.yaml /mnt/install/etc/netplan/
-
-mount --rbind /dev  /mnt/install/dev
-mount --rbind /proc /mnt/install/proc
-mount --rbind /sys  /mnt/install/sys
 
 
+# 3 OS Configuration
 
+echo $HOST > /mnt/install/etc/hostname
+sed "s/ubuntu/$HOST/" /etc/hosts > ${INSTALL_DIR}etc/hosts
+sed '/cdrom/d' /etc/apt/sources.list > ${INSTALL_DIR}etc/apt/sources.list
+cp /etc/netplan/*.yaml ${INSTALL_DIR}/etc/netplan/
 
-chroot /mnt/install \
-/usr/bin/env DISK=$DISK POOL=$POOL USER=$USER \
+mount --rbind /dev  ${INSTALL_DIR}dev
+mount --rbind /proc ${INSTALL_DIR}proc
+mount --rbind /sys  ${INSTALL_DIR}sys
+
+chroot ${INSTALL_DIR} /usr/bin/env \
+DISK=$DISK POOL=$POOL USER=$USER INSTALL_DIR=$INSTALL_DIR \
 bash --login
-    
+
+apt update --yes
+
 locale-gen --purge "en_US.UTF-8"
 update-locale LANG=en_US.UTF-8 LANGUAGE=en_US
 dpkg-reconfigure --frontend noninteractive locales
 dpkg-reconfigure tzdata
 
-apt update
-apt install --yes --no-install-recommends linux-image-generic linux-headers-generic
-
-apt install --yes zfs-initramfs 
-apt install --yes cryptsetup 
-apt install --yes keyutils 
-apt install --yes grub-efi-amd64-signed 
-apt install --yes shim-signed tasksel
+# Install latest Linux image and ZFS
+apt install --yes --no-install-recommends linux-image-generic linux-headers-generic 
+apt install --yes dpkg-dev 
+echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections 
 
 
-apt install --yes nano
-# /etc/systemd/system/zfs-load-key@.service
-[Unit]
-Description=Load %I encryption keys
-Before=systemd-user-sessions.service
-After=zfs-import.target
+# apt install --yes zfs-dkms 
 
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStart=/usr/bin/bash -c 'until (systemd-ask-password "Encrypted ZFS password for %I" --no-tty | zfs load-key %I); do echo "Try again!"; done'
-
-[Install]
-WantedBy=zfs-mount.service
-#
-
-chmod a+x /etc/systemd/system/zfs-load-key\@.service
-
-
-
+apt install --yes zfs-initramfs grub-efi-amd64-signed shim-signed
+apt install --yes zfsutils-linux 
 
 echo "PARTUUID=$(blkid -s PARTUUID -o value ${DISK}1) \
 /boot ext4 noatime,nofail,x-systemd.device-timeout=1 0 1" >> /etc/fstab
-
 echo "PARTUUID=$(blkid -s PARTUUID -o value ${DISK}2) \
 /boot/efi vfat noatime,nofail,x-systemd.device-timeout=1 0 1" >> /etc/fstab
 cat /etc/fstab
 
+sudo systemctl list-unit-files | grep zfs
 
- #cp /usr/share/systemd/tmp.mount /etc/systemd/system/
+# All disabled service must be enabled
+sudo systemctl enable zfs-import-scan.service
 
-systemctl list-unit-files | grep zfs
-systemctl enable zfs-import-scan.service 
 
+# 4. Grub Installation
+grub-probe /boot
+# ext2
+
+# !!! Correct arguments if needed
 sed -E 's>^(GRUB_CMDLINE_LINUX=")>\1root=ZFS=rpool/root>' /etc/default/grub -i
 cat /etc/default/grub
+# ...
+# GRUB_CMDLINE_LINUX="root=ZFS=rpool/root"
+# ...
+
 echo 'GRUB_DISABLE_OS_PROBER=true' >> /etc/default/grub 
 
 KERNEL=`ls /usr/lib/modules/ | cut -d/ -f1 | sed 's/linux-image-//'`
 update-initramfs -c -k $KERNEL
-# update-initramfs -u -k all
 update-grub
 
+# sudo select-editor
+# EDITOR=nano crontab -e
+# ^C
+crontab -e
+( crontab -l ; echo "@reboot mount /boot ; mount /boot/efi" ) | crontab -
+
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy
+
+adduser $USER
+usermod -a -G adm,cdrom,dip,lpadmin,plugdev,sudo $USER
+chown -R $USER:$USER /home/$USER
+
+exit
+umount ${INSTALL_DIR}boot/efi
+umount ${INSTALL_DIR}boot
+mount | grep -v zfs | tac | awk '/\/mnt/ {print $3}' | xargs -i{} umount -lf {}
+zpool export -a
