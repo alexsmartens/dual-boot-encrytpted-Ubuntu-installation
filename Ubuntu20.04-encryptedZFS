@@ -16,14 +16,15 @@ sudo -i
 
 POOL=rpool
 HOST=media-hub
-USER=user
+USER=media-hub
 DISK=/dev/sda
 INSTALL_DIR=/mnt/install/
 
-
+apt update
 apt-add-repository universe 
-apt install --yes debootstrap gdisk dkms dpkg-dev
-apt install --yes zfs-dkms zfsutils-linux
+apt update
+apt install --yes debootstrap gdisk dkms dpkg-dev --fix-missing
+apt install --yes zfsutils-linux zfs-dkms 
 
 
 # 1. Partitioning
@@ -152,9 +153,14 @@ crontab -e
 
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy
 
+# Install GUI
+tasksel install ubuntu-desktop-minimal
+
 adduser $USER
 usermod -a -G adm,cdrom,dip,lpadmin,plugdev,sudo $USER
 chown -R $USER:$USER /home/$USER
+addgroup $USER sudo
+
 
 exit
 umount ${INSTALL_DIR}boot/efi
