@@ -20,11 +20,11 @@ USER=media-hub
 DISK=/dev/sda
 INSTALL_DIR=/mnt/install/
 
-apt update
-apt-add-repository universe 
-apt update
-apt install --yes debootstrap gdisk dkms dpkg-dev --fix-missing
-apt install --yes zfsutils-linux zfs-dkms 
+apt update --yes
+# apt-add-repository universe 
+apt install --yes debootstrap gdisk dkms dpkg-dev
+apt install --yes zfsutils-linux
+# apt install --yes zfs-dkms 
 
 
 # 1. Partitioning
@@ -98,7 +98,6 @@ chroot ${INSTALL_DIR} /usr/bin/env \
 DISK=$DISK POOL=$POOL USER=$USER INSTALL_DIR=$INSTALL_DIR \
 bash --login
 
-apt update --yes
 
 locale-gen --purge "en_US.UTF-8"
 update-locale LANG=en_US.UTF-8 LANGUAGE=en_US
@@ -113,7 +112,7 @@ echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-sele
 
 # apt install --yes zfs-dkms 
 
-apt install --yes zfs-initramfs grub-efi-amd64-signed shim-signed
+apt install --yes zfs-initramfs grub-efi-amd64-signed shim-signed tasksel
 apt install --yes zfsutils-linux 
 
 echo "PARTUUID=$(blkid -s PARTUUID -o value ${DISK}1) \
@@ -145,20 +144,17 @@ KERNEL=`ls /usr/lib/modules/ | cut -d/ -f1 | sed 's/linux-image-//'`
 update-initramfs -c -k $KERNEL
 update-grub
 
-# sudo select-editor
-# EDITOR=nano crontab -e
-# ^C
-crontab -e
+select-editor
+# input -> 1 
 ( crontab -l ; echo "@reboot mount /boot ; mount /boot/efi" ) | crontab -
 
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy
 
 # Install GUI
-tasksel install ubuntu-desktop-minimal
+tasksel install ubuntu-desktop
 
-adduser $USER
-usermod -a -G adm,cdrom,dip,lpadmin,plugdev,sudo $USER
-chown -R $USER:$USER /home/$USER
+adduser --quiet --disabled-password --shell /bin/bash --home /home/$USER --gecos "User" $USER 
+# echo "$USER:???MY_PASSWORD???" | chpasswd 
 addgroup $USER sudo
 
 
