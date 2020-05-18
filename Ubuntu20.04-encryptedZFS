@@ -139,7 +139,7 @@ After=zfs-import.target
 Type=oneshot
 RemainAfterExit=yes
 #ExecStart=/usr/bin/zfs load-key -a
-ExecStart=/usr/bin/bash -c 'echo pwd:$(pwd) root:  $(ls /)'
+ExecStart=/usr/bin/zfs  load-key $POOL
 
 [Install]
 WantedBy=zfs-mount.service
@@ -158,14 +158,14 @@ sudo systemctl enable zfs-import-scan.service
 grub-probe /boot
 # ext2
 
-# !!! Correct arguments if needed
-sed -E 's>^(GRUB_CMDLINE_LINUX=")>\1root=ZFS=rpool/root>' /etc/default/grub -i
-cat /etc/default/grub
-# ...
-# GRUB_CMDLINE_LINUX="root=ZFS=rpool/root"
-# ...
+## !!! Correct arguments if needed
+#sed -E 's>^(GRUB_CMDLINE_LINUX=")>\1root=ZFS=rpool/root>' /etc/default/grub -i
+#cat /etc/default/grub
+## ...
+## GRUB_CMDLINE_LINUX="root=ZFS=rpool/root"
+## ...
 
-echo 'GRUB_DISABLE_OS_PROBER=true' >> /etc/default/grub 
+#  echo 'GRUB_DISABLE_OS_PROBER=true' >> /etc/default/grub 
 
 KERNEL=`ls /usr/lib/modules/ | cut -d/ -f1 | sed 's/linux-image-//'`
 update-initramfs -c -k $KERNEL
