@@ -127,9 +127,8 @@ echo "PARTUUID=$(blkid -s PARTUUID -o value ${DISK}2) \
 cat /etc/fstab
 
 # Step 3 of adding the key to $POOL
-dd if=/dev/random of=$(pwd)/boot/${POOL}.key bs=1 count=32
-KEY_ADDRESS=file://$(pwd)/boot/${POOL}.key
-zfs change-key -o keyformat=raw -o keylocation=$KEY_ADDRESS $POOL
+dd if=/dev/random of=/boot/${POOL}.key bs=1 count=32
+zfs change-key -o keyformat=raw -o keylocation=file:///boot/${POOL}.key $POOL
 zfs get keylocation $POOL
 #
 cat > /etc/systemd/system/zfs-load-key.service <<EOF
@@ -162,26 +161,26 @@ sudo systemctl enable zfs-import-scan.service
 grub-probe /boot
 # ext2
 
-## !!! Correct arguments if needed
-#sed -E 's>^(GRUB_CMDLINE_LINUX=")>\1root=ZFS=rpool/root>' /etc/default/grub -i
-#cat /etc/default/grub
-## ...
-## GRUB_CMDLINE_LINUX="root=ZFS=rpool/root"
-## ...
+# !!! Correct arguments if needed
+sed -E 's>^(GRUB_CMDLINE_LINUX=")>\1root=ZFS=rpool/root>' /etc/default/grub -i
+cat /etc/default/grub
+# ...
+# GRUB_CMDLINE_LINUX="root=ZFS=rpool/root"
+# ...
 
-#  echo 'GRUB_DISABLE_OS_PROBER=true' >> /etc/default/grub 
+echo 'GRUB_DISABLE_OS_PROBER=true' >> /etc/default/grub 
 
 KERNEL=`ls /usr/lib/modules/ | cut -d/ -f1 | sed 's/linux-image-//'`
 update-initramfs -c -k $KERNEL
 update-grub
 
-# select-editor
-# input -> 1 
 # For some reason it does not work for the first time
 ( crontab -l ; echo "@reboot mount /boot ; mount /boot/efi" ) | crontab -
 ( crontab -l ; echo "@reboot mount /boot ; mount /boot/efi" ) | crontab -
 
 grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy
+# Verify that the ZFS module is installed:
+ls /boot/grub/*/zfs.mod
 
 # Install GUI
 tasksel install ubuntu-desktop
