@@ -141,8 +141,7 @@ After=zfs-import.target
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-#ExecStart=/usr/bin/zfs load-key -a
-ExecStart=/usr/bin/zfs  load-key $POOL
+ExecStart=/usr/bin/zfs load-key -a
 
 [Install]
 WantedBy=zfs-mount.service
@@ -178,7 +177,9 @@ update-grub
 ( crontab -l ; echo "@reboot mount /boot ; mount /boot/efi" ) | crontab -
 ( crontab -l ; echo "@reboot mount /boot ; mount /boot/efi" ) | crontab -
 
-grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy
+# grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy
+grub-install --target=x86_64-efi --efi-directory /boot/efi --bootloader-id=ubuntu --boot-directory=/boot/efi/EFI/ubuntu --recheck
+
 # Verify that the ZFS module is installed:
 ls /boot/grub/*/zfs.mod
 
