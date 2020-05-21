@@ -11,7 +11,17 @@ https://www.medo64.com/2020/04/installing-uefi-zfs-root-on-ubuntu-20-04/
 https://github.com/dynerose/Remote-unlock-native-ZFS/blob/bef71dc4df0e39d41d3a8e26bed5a86d28c7d44a/install.bash
 https://github.com/chungy/zfs-boottime-encryption/blob/dcf2a40cc1fa7d579b54edda3322e482c31ead03/README.adoc
 
+https://blog.seonwoolee.com/using-zfs-native-encryption-on-root/
+https://zfs.datto.com/2017_slides/caputi.pdf
 
+
+
+https://github.com/FloatingOctothorpe/floatingoctothorpe.github.io/tree/cb38db98d539b72a7aed2e1bbf955dd60c7595c4/2020
+https://github.com/nosuz/instant-zfs-root-fs/blob/acfd7d22a76d5b08b2daaba22d085c2265d166e3/instant-zfs-root-fs.sh
+
+
+
+zoom
 
 sudo -i
 
@@ -113,12 +123,11 @@ dpkg-reconfigure tzdata
 # Install latest Linux image and ZFS
 apt install --yes --no-install-recommends linux-image-generic linux-headers-generic 
 apt install --yes dpkg-dev 
+
 echo "zfs-dkms zfs-dkms/note-incompatible-licenses note true" | debconf-set-selections 
-
-
 # apt install --yes zfs-dkms 
-
 apt install --yes zfs-initramfs grub-efi-amd64-signed shim-signed tasksel
+#apt install -y zfsutils-linux gdisk efibootmgr 
 
 echo "PARTUUID=$(blkid -s PARTUUID -o value ${DISK}1) \
 /boot ext4 noatime,nofail,x-systemd.device-timeout=1 0 1" >> /etc/fstab
@@ -147,6 +156,7 @@ ExecStart=/usr/bin/zfs load-key -a
 WantedBy=zfs-mount.service
 EOF
 
+cat /etc/systemd/system/zfs-load-key.service 
 
 systemctl enable zfs-load-key.service
 
@@ -175,10 +185,10 @@ update-grub
 
 # For some reason it does not work for the first time
 ( crontab -l ; echo "@reboot mount /boot ; mount /boot/efi" ) | crontab -
-( crontab -l ; echo "@reboot mount /boot ; mount /boot/efi" ) | crontab -
+#( crontab -l ; echo "@reboot mount /boot ; mount /boot/efi" ) | crontab -
+crontab -l
 
-# grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy
-grub-install --target=x86_64-efi --efi-directory /boot/efi --bootloader-id=ubuntu --boot-directory=/boot/efi/EFI/ubuntu --recheck
+grub-install --target=x86_64-efi --efi-directory=/boot/efi --bootloader-id=ubuntu --recheck --no-floppy
 
 # Verify that the ZFS module is installed:
 ls /boot/grub/*/zfs.mod
