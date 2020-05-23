@@ -92,8 +92,8 @@ mount ${DISK}2 ${INSTALL_DIR}boot/efi
 zfs create -o mountpoint=/home ${POOL}/home
 zfs create ${POOL}/var
 
-## Step 2 of adding the key to $POOL
-#cp $(pwd)/${POOL}.key ${INSTALL_DIR}boot/${POOL}.key
+# Step 2 copy the key to the final OS
+cp /boot/${POOL}.key ${INSTALL_DIR}/boot/${POOL}.key
 
 
 INCLUDES='--include tzdata,wget,nano'
@@ -136,10 +136,6 @@ echo "PARTUUID=$(blkid -s PARTUUID -o value ${DISK}1) \
 echo "PARTUUID=$(blkid -s PARTUUID -o value ${DISK}2) \
 /boot/efi vfat noatime,nofail,x-systemd.device-timeout=1 0 1" >> /etc/fstab
 cat /etc/fstab
-
-# Step 2 copy the key to the final OS
-mkdir /boot
-cp /boot/${POOL}.key ${INSTALL_DIR}/boot/${POOL}.key
 
 cat > /etc/systemd/system/zfs-load-key.service <<EOF
 [Unit]
