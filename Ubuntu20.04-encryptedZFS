@@ -77,7 +77,7 @@ zpool list
 zfs get keylocation $POOL
 
 zfs create -o canmount=noauto -o mountpoint=/ $POOL/root
-# zfs mount $POOL/root
+zfs mount $POOL/root
 # Datasets
 zfs create -o mountpoint=/home ${POOL}/home
 zfs create ${POOL}/var
@@ -142,12 +142,12 @@ cat > /etc/systemd/system/zfs-load-key.service <<EOF
 [Unit]
 Description=Load encryption keys
 RequiresMountsFor=/boot
-DefaultDependencies=false
 Documentation=man:zfs(8)
 DefaultDependencies=no
 After=systemd-udev-settle.service
 After=zfs-import.target
 After=systemd-remount-fs.service
+After=systemd-fstab-generator.service
 Before=zfs-mount.service
 
 [Service]
@@ -163,7 +163,7 @@ cat /etc/systemd/system/zfs-load-key.service
 
 systemctl enable zfs-load-key.service
 
-sudo systemctl list-unit-files | grep zfs
+systemctl list-unit-files | grep zfs
 
 # All disabled service must be enabled
 sudo systemctl enable zfs-import-scan.service
