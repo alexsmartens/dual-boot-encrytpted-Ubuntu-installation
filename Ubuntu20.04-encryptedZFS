@@ -21,9 +21,8 @@ https://github.com/nosuz/instant-zfs-root-fs/blob/acfd7d22a76d5b08b2daaba22d085c
 
 https://github.com/openzfs/zfs/issues/4898
 https://utcc.utoronto.ca/~cks/space/blog/linux/SystemdAndBindMounts
+https://serverfault.com/questions/972496/can-i-encrypt-a-whole-pool-with-zfsol-0-8-1
 
-
-zoom
 
 sudo -i
 
@@ -46,7 +45,8 @@ sgdisk --zap-all $DISK
 sgdisk --new=1:0:+2000M $DISK
 sgdisk --new=2:0:+512M $DISK
 sgdisk --new=3:0:+92160M $DISK
-sgdisk --typecode=1:8301 --typecode=2:ef00 --typecode=3:8301 $DISK
+# sgdisk --typecode=1:8301 --typecode=2:ef00 --typecode=3:8301 $DISK
+sgdisk --typecode=1:8300 --typecode=2:EF00 --typecode=3:BF01 $DISK
 sgdisk --change-name=1:/boot --change-name=2:EFI-SP --change-name=3:rootfs $DISK
 sgdisk --print $DISK
 
@@ -77,7 +77,11 @@ zpool list
 zfs get keylocation $POOL
 
 zfs create -o canmount=noauto -o mountpoint=/ $POOL/root
-zfs mount $POOL/root
+# zfs mount $POOL/root
+# Datasets
+zfs create -o mountpoint=/home ${POOL}/home
+zfs create ${POOL}/var
+zfs mount -a
 
 yes | mkfs.ext4 ${DISK}1
 mkdir ${INSTALL_DIR}boot
@@ -88,12 +92,9 @@ mkfs.msdos -F 32 -n EFI ${DISK}2
 mkdir ${INSTALL_DIR}boot/efi
 mount ${DISK}2 ${INSTALL_DIR}boot/efi
 
-# Datasets
-zfs create -o mountpoint=/home ${POOL}/home
-zfs create ${POOL}/var
 
 # Step 2 copy the key to the final OS
-cp /boot/${POOL}.key ${INSTALL_DIR}/boot/${POOL}.key
+cp /boot/${POOL}.key ${INSTALL_DIR}boot/${POOL}.key
 
 
 INCLUDES='--include tzdata,wget,nano'
@@ -142,8 +143,12 @@ cat > /etc/systemd/system/zfs-load-key.service <<EOF
 Description=Load encryption keys
 RequiresMountsFor=/boot
 DefaultDependencies=false
-Before=zfs-mount.service
+Documentation=man:zfs(8)
+DefaultDependencies=no
+After=systemd-udev-settle.service
 After=zfs-import.target
+After=systemd-remount-fs.service
+Before=zfs-mount.service
 
 [Service]
 Type=oneshot
