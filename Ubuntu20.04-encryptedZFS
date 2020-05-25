@@ -23,6 +23,9 @@ https://github.com/openzfs/zfs/issues/4898
 https://utcc.utoronto.ca/~cks/space/blog/linux/SystemdAndBindMounts
 https://serverfault.com/questions/972496/can-i-encrypt-a-whole-pool-with-zfsol-0-8-1
 
+# Issue
+https://github.com/openzfs/zfs/issues/6556#issuecomment-633377704
+https://unix.stackexchange.com/questions/92720/does-initramfs-use-etc-fstab
 
 sudo -i
 
