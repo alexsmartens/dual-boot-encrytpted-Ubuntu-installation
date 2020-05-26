@@ -144,13 +144,9 @@ cat /etc/fstab
 cat > /etc/systemd/system/zfs-load-key.service <<EOF
 [Unit]
 Description=Load encryption keys
-RequiresMountsFor=/boot
 Documentation=man:zfs(8)
-DefaultDependencies=no
-After=systemd-udev-settle.service
+DefaultDependencies=False
 After=zfs-import.target
-After=systemd-remount-fs.service
-After=systemd-fstab-generator.service
 Before=zfs-mount.service
 
 [Service]
@@ -187,6 +183,10 @@ echo 'GRUB_DISABLE_OS_PROBER=true' >> /etc/default/grub
 
 KERNEL=`ls /usr/lib/modules/ | cut -d/ -f1 | sed 's/linux-image-//'`
 update-initramfs -c -k $KERNEL
+
+## !!! >> Edit initramfs init at this point
+# /usr/share/initramfs-tools/init
+
 update-grub
 
 # For some reason it does not work for the first time
