@@ -260,13 +260,13 @@ fi
 
 mkdir /boot/
 echo ">>>>> (7.1: mount /boot/) log script for /usr/share/initramfs-tools/init"
-mount PARTUUID="dd0bf002-38ef-4aa6-a346-27256d7772c7" /boot/
+mount /dev/sda1 /boot
 # echo ">>>>> (7.2: ls /boot/) log script for /usr/share/initramfs-tools/init"
 echo $(ls /boot/)
-echo ">>>>> (7.3: zpool load-key rpool) log script for /usr/share/initramfs-tools/init"
-zpool load-key rpool
+echo ">>>>> (7.3: zfs load-key rpool) log script for /usr/share/initramfs-tools/init"
+zfs load-key rpool
 echo ">>>>> (7.4: umount /boot/) log script for /usr/share/initramfs-tools/init"
-umount PARTUUID="dd0bf002-38ef-4aa6-a346-27256d7772c7"
+umount /dev/sda1
 echo ">>>>> (7.5: done) log script for /usr/share/initramfs-tools/init"
 
 maybe_break top
