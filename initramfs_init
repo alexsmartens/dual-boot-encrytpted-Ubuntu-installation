@@ -258,11 +258,26 @@ if [ -n "$log_output" ]; then
 	unset log_output
 fi
 
+echo ">>>>> (7.1: mount /boot/) log script for /usr/share/initramfs-tools/init"
+mount PARTUUID="2230269f-c375-498b-9bd2-3992f7816bd3" /boot/
+echo ">>>>> (7.2: ls /boot/) log script for /usr/share/initramfs-tools/init"
+echo $(ls /boot/)
+echo ">>>>> (7.3: zpool load-key rpool) log script for /usr/share/initramfs-tools/init"
+zpool load-key rpool
+echo ">>>>> (7.4: umount /boot/) log script for /usr/share/initramfs-tools/init"
+umount PARTUUID="2230269f-c375-498b-9bd2-3992f7816bd3"
+echo ">>>>> (7.5: done) log script for /usr/share/initramfs-tools/init"
+
 maybe_break top
+
+echo ">>>>> (8) log script for /usr/share/initramfs-tools/init"
 
 # export BOOT variable value for compcache,
 # so we know if we run from casper
 export BOOT
+
+echo ">>>>> (9) log script for /usr/share/initramfs-tools/init"
+echo $BOOT
 
 # Don't do log messages here to avoid confusing graphical boots
 run_scripts /scripts/init-top
@@ -278,6 +293,8 @@ maybe_break premount
 run_scripts /scripts/init-premount
 [ "$quiet" != "y" ] && log_end_msg
 
+echo ">>>>> (10) log script for /usr/share/initramfs-tools/init"
+
 maybe_break mount
 log_begin_msg "Mounting root file system"
 # Always load local and nfs (since these might be needed for /etc or
@@ -292,11 +309,16 @@ mount_premount
 mountroot
 log_end_msg
 
+echo ">>>>> (11) log script for /usr/share/initramfs-tools/init"
+
 if read_fstab_entry /usr; then
 	log_begin_msg "Mounting /usr file system"
 	mountfs /usr
 	log_end_msg
 fi
+
+
+echo ">>>>> (12) log script for /usr/share/initramfs-tools/init"
 
 # Mount cleanup
 mount_bottom
