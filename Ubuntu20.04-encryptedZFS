@@ -184,8 +184,16 @@ echo 'GRUB_DISABLE_OS_PROBER=true' >> /etc/default/grub
 KERNEL=`ls /usr/lib/modules/ | cut -d/ -f1 | sed 's/linux-image-//'`
 update-initramfs -c -k $KERNEL
 
+
+
+
 ## !!! >> Edit initramfs init at this point
 # /usr/share/initramfs-tools/init
+
+update-initramfs -u
+
+
+
 
 update-grub
 
