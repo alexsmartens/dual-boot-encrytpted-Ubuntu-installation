@@ -258,14 +258,15 @@ if [ -n "$log_output" ]; then
 	unset log_output
 fi
 
+mkdir /boot/
 echo ">>>>> (7.1: mount /boot/) log script for /usr/share/initramfs-tools/init"
-mount PARTUUID="2230269f-c375-498b-9bd2-3992f7816bd3" /boot/
-echo ">>>>> (7.2: ls /boot/) log script for /usr/share/initramfs-tools/init"
+mount PARTUUID="dd0bf002-38ef-4aa6-a346-27256d7772c7" /boot/
+# echo ">>>>> (7.2: ls /boot/) log script for /usr/share/initramfs-tools/init"
 echo $(ls /boot/)
 echo ">>>>> (7.3: zpool load-key rpool) log script for /usr/share/initramfs-tools/init"
 zpool load-key rpool
 echo ">>>>> (7.4: umount /boot/) log script for /usr/share/initramfs-tools/init"
-umount PARTUUID="2230269f-c375-498b-9bd2-3992f7816bd3"
+umount PARTUUID="dd0bf002-38ef-4aa6-a346-27256d7772c7"
 echo ">>>>> (7.5: done) log script for /usr/share/initramfs-tools/init"
 
 maybe_break top
