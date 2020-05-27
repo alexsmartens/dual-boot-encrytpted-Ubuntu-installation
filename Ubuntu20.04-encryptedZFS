@@ -1,31 +1,24 @@
-## Links 
+### References 
+## 1. Ubuntu installation on encrypted ZFS
+# ZFS natively encrypted with a passphrase
+https://github.com/dynerose/Remote-unlock-native-ZFS/blob/bef71dc4df0e39d41d3a8e26bed5a86d28c7d44a/install.bash
+# Configuring ZFS native encryption with a key
+https://github.com/openzfs/zfs/issues/10360
+# ZFS on LUKS encrypted partition
+https://www.medo64.com/2020/04/installing-uefi-zfs-root-on-ubuntu-20-04/
+# Potentially interesting to follow: ZFS native encryption key stored on a USB
+https://github.com/openzfs/zfs/issues/6556
+
+## 2. Generic
 https://help.ubuntu.com/community/Full_Disk_Encryption_Howto_2019
 https://linsomniac.gitlab.io/post/2020-04-09-ubuntu-2004-encrypted-zfs/
 # Mounting ZFS pools 
 https://www.cyberciti.biz/faq/freebsd-linux-unix-zfs-automatic-mount-points-command/
-
+# Initialization of ZFS pool encrypted with a key  
 https://serverfault.com/questions/972496/can-i-encrypt-a-whole-pool-with-zfsol-0-8-1
-https://www.youtube.com/watch?v=oYm4iYu2ugY
-
-https://www.medo64.com/2020/04/installing-uefi-zfs-root-on-ubuntu-20-04/
-https://github.com/dynerose/Remote-unlock-native-ZFS/blob/bef71dc4df0e39d41d3a8e26bed5a86d28c7d44a/install.bash
 https://github.com/chungy/zfs-boottime-encryption/blob/dcf2a40cc1fa7d579b54edda3322e482c31ead03/README.adoc
 
-https://blog.seonwoolee.com/using-zfs-native-encryption-on-root/
-https://zfs.datto.com/2017_slides/caputi.pdf
 
-
-
-https://github.com/FloatingOctothorpe/floatingoctothorpe.github.io/tree/cb38db98d539b72a7aed2e1bbf955dd60c7595c4/2020
-https://github.com/nosuz/instant-zfs-root-fs/blob/acfd7d22a76d5b08b2daaba22d085c2265d166e3/instant-zfs-root-fs.sh
-
-https://github.com/openzfs/zfs/issues/4898
-https://utcc.utoronto.ca/~cks/space/blog/linux/SystemdAndBindMounts
-https://serverfault.com/questions/972496/can-i-encrypt-a-whole-pool-with-zfsol-0-8-1
-
-# Issue
-https://github.com/openzfs/zfs/issues/6556#issuecomment-633377704
-https://unix.stackexchange.com/questions/92720/does-initramfs-use-etc-fstab
 
 sudo -i
 
