@@ -434,9 +434,20 @@ decrypt_fs()
 			[ "$KEYSTATUS" = "unavailable" ] || return 0
 			TRY_COUNT=3
 
+			echo ">>>>> (1: before -> If key is stored in a file, do not prompt) log script for /usr/share/initramfs-tools/scripts/zfs"
 			# If key is stored in a file, do not prompt
 			if ! [ "${KEYLOCATION}" = "prompt" ]; then
+				echo ">>>>> (1.1: ls /dev) log script for /usr/share/initramfs-tools/scripts/zfs"
+				mkdir /boot/
+				echo ">>>>> (1.2: mount /boot/) log script for /usr/share/initramfs-tools/init"
+				mount /dev/sda1 /boot
+				echo $(ls /boot/)
+				echo ">>>>> (1.3: ZFS load-key ENCRYPTIONROOT) log script for /usr/share/initramfs-tools/init"
 				$ZFS load-key "${ENCRYPTIONROOT}"
+				echo ">>>>> (1.4: umount /boot/) log script for /usr/share/initramfs-tools/init"
+				umount /dev/sda1
+				echo ">>>>> (1.5: rm /boot/) log script for /usr/share/initramfs-tools/init"
+				rm /boot/
 
 			# Prompt with plymouth, if active
 			elif [ -e /bin/plymouth ] && /bin/plymouth --ping 2>/dev/null; then
