@@ -1,3 +1,9 @@
 https://security.stackexchange.com/questions/194081/use-tpm2-0-to-securely-decrypt-the-hard-drive-in-linux-unattended
 https://blog.dowhile0.org/2017/10/18/automatic-luks-volumes-unlocking-using-a-tpm2-chip/
+https://techrevelations.de/2019/02/04/tpm-encryption-in-fedora-linux/
 https://github.com/vchatterji/tpm2-luks
+
+https://community.spiceworks.com/topic/1970944-tpm-luks-bitlocker-full-disk-encryption-for-linux
+https://github.com/fox-it/linux-luks-tpm-boot
+
+https://github.com/tpm2-software/tpm2-tools/tree/master/doc
