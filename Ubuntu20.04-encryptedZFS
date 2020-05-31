@@ -177,7 +177,7 @@ ls /boot/grub/*/zfs.mod
 # Install GUI
 tasksel install ubuntu-desktop
 
-$ Upgrade packages 
+# Upgrade packages 
 apt dist-upgrade --yes
 
 adduser $USER
