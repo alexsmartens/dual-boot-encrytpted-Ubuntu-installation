@@ -179,6 +179,8 @@ tasksel install ubuntu-desktop
 
 # Upgrade packages 
 apt dist-upgrade --yes
+apt update
+apt upgrade
 
 adduser $USER
 addgroup $USER sudo
