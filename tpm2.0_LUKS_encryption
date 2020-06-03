@@ -18,3 +18,11 @@ pwgen 63 1 -s -y -r \`\'\" >> rpool.passphrase
  # usb32.key
 # sudo cryptsetup luksAddKey /dev/sdb1 rpool.passphrase
 sudo tpm2_nvread 0x1500016 -C 0x40000001
+
+
+$ cat my.passphrase rpool.passphrase | sudo cryptsetup luksAddKey /dev/sdc1
+{ echo "MY_PASSPHRASE"; cat rpool.passphrase; } | sudo cryptsetup luksAddKey /dev/sdc1
+
+# sudo blkid /dev/sdc1
+# cat rpool.passphrase | sudo cryptsetup open /dev/disk/by-uuid/f033c97d-50de-4595-8698-3d21c4528c2d SECRET
+sudo tpm2_nvread 0x1500016 -C 0x40000001 | sudo cryptsetup open /dev/disk/by-uuid/f033c97d-50de-4595-8698-3d21c4528c2d SECRET2
