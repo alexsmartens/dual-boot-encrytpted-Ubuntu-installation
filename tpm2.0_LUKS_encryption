@@ -7,3 +7,14 @@ https://community.spiceworks.com/topic/1970944-tpm-luks-bitlocker-full-disk-encr
 https://github.com/fox-it/linux-luks-tpm-boot
 
 https://github.com/tpm2-software/tpm2-tools/tree/master/doc
+
+
+https://run.tournament.org.il/ubuntu-18-04-and-tpm2-encrypted-system-disk/
+
+sudo tpm2_nvdefine 0x1500016 -C 0x40000001 -s 64 -a 0x2000A
+# cat /dev/urandom | tr -dc ‘a-zA-Z0-9’ | fold -w 32 | head -n 1 > usb32.key
+pwgen 63 1 -s -y -r \`\'\" >> rpool.passphrase
+
+ # usb32.key
+# sudo cryptsetup luksAddKey /dev/sdb1 rpool.passphrase
+sudo tpm2_nvread 0x1500016 -C 0x40000001
