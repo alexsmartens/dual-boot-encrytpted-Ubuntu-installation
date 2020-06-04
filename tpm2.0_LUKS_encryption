@@ -32,7 +32,7 @@ sudo tpm2_nvread 0x1500016 -C 0x40000001
 # Alternative
 mkdir /mnt_dev
 mount /dev/disk/by-uuid/a1b37c46-18f7-48c2-9669-faf8e1051f82 /mnt_dev
-tpm2_rsadecrypt -c mnt_dev/key.ctx mnt_dev/rpool.enc_old | $ZFS load-key rpool
+tpm2_rsadecrypt -c /mnt_dev/key.ctx /mnt_dev/rpool.enc_old | $ZFS load-key rpool
 umount /dev/disk/by-uuid/a1b37c46-18f7-48c2-9669-faf8e1051f82
 rm -r /mnt_dev
 
