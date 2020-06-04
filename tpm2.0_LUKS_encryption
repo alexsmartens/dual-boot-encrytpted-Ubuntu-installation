@@ -14,7 +14,7 @@ https://run.tournament.org.il/ubuntu-18-04-and-tpm2-encrypted-system-disk/
 sudo tpm2_nvdefine 0x1500016 -C 0x40000001 -s 64 -a 0x2000A
 # cat /dev/urandom | tr -dc ‘a-zA-Z0-9’ | fold -w 32 | head -n 1 > usb32.key
 # pwgen 63 1 -s -y -r \`\'\" >> rpool.passphrase
-pwgen 50 1 -A -s | fold -w5 | echo $(cat) | tr " "  -
+pwgen 25 1 -A -s | fold -w5 | echo $(cat) | tr " "  -
 
  # usb32.key
 # sudo cryptsetup luksAddKey /dev/sdb1 rpool.passphrase
@@ -25,11 +25,16 @@ $ cat my.passphrase rpool.passphrase | sudo cryptsetup luksAddKey /dev/sdc1
 { echo "MY_PASSPHRASE"; cat rpool.passphrase; } | sudo cryptsetup luksAddKey /dev/sdc1
 
 # sudo blkid /dev/sdb1
-# cat rpool.passphrase | sudo cryptsetup open /dev/disk/by-uuid/f033c97d-50de-4595-8698-3d21c4528c2d SECRET
-sudo tpm2_nvread 0x1500016 -C 0x40000001 | sudo cryptsetup open /dev/disk/by-uuid/f033c97d-50de-4595-8698-3d21c4528c2d SECRET2
+# cat rpool.passphrase | sudo cryptsetup open /dev/disk/by-uuid/a1b37c46-18f7-48c2-9669-faf8e1051f82 SECRET
+sudo tpm2_nvread 0x1500016 -C 0x40000001 | sudo cryptsetup open /dev/disk/by-uuid/a1b37c46-18f7-48c2-9669-faf8e1051f82 SECRET2
 sudo tpm2_nvread 0x1500016 -C 0x40000001 
 
-
+# Alternative
+mkdir /mnt_dev
+mount /dev/disk/by-uuid/a1b37c46-18f7-48c2-9669-faf8e1051f82 /mnt_dev
+tpm2_rsadecrypt -c mnt_dev/key.ctx mnt_dev/rpool.enc_old | $ZFS load-key rpool
+umount /dev/disk/by-uuid/a1b37c46-18f7-48c2-9669-faf8e1051f82
+rm -r /mnt_dev
 
 
 
@@ -61,13 +66,13 @@ tpm2_changeauth -c lockout ***MY_PASSPHRASE***
 tpm2_createprimary -c primary.ctx -P ***MY_PASSPHRASE**
 
 #> Create a RSA key under the previous primary key, with subobjectpass as the object password, with SHA256 name hash algorithm, with public portion saved in key.pub and private portion saved in key.priv
-tpm2_create -C primary.ctx -u key.pub -r key.priv
+cd bak
 
 #> Load the created RSA key
 tpm2_load  -C primary.ctx -u key.pub -r key.priv -c key.ctx -n key.name
 
 # Encrypt with RSA key
-tpm2_rsaencrypt -c key.ctx -o rpool.enc rpool.passphrase
+cphrase
 
 # Decrypt with RSA key
 #tpm2_rsaencrypt -c key.ctx -o rpool.enc rpool.passphras
