@@ -23,9 +23,10 @@ sudo tpm2_nvread 0x1500016 -C 0x40000001
 $ cat my.passphrase rpool.passphrase | sudo cryptsetup luksAddKey /dev/sdc1
 { echo "MY_PASSPHRASE"; cat rpool.passphrase; } | sudo cryptsetup luksAddKey /dev/sdc1
 
-# sudo blkid /dev/sdc1
+# sudo blkid /dev/sdb1
 # cat rpool.passphrase | sudo cryptsetup open /dev/disk/by-uuid/f033c97d-50de-4595-8698-3d21c4528c2d SECRET
 sudo tpm2_nvread 0x1500016 -C 0x40000001 | sudo cryptsetup open /dev/disk/by-uuid/f033c97d-50de-4595-8698-3d21c4528c2d SECRET2
+sudo tpm2_nvread 0x1500016 -C 0x40000001 
 
 
 
@@ -51,6 +52,22 @@ tpm2_hash -C e -g sha1 -o hash.bin input.txt
 
 
 #> Take ownership
-tpm2_changeauth -c owner ***newpass***
-tpm2_changeauth -c endorsement ***newpass***
-tpm2_changeauth -c lockout ***newpass***
+tpm2_changeauth -c owner ***MY_PASSPHRASE***
+tpm2_changeauth -c endorsement ***MY_PASSPHRASE***
+tpm2_changeauth -c lockout ***MY_PASSPHRASE***
+
+#> Create a Primary Object in endorsement hierarchy, with objectpass as the object password, with RSA keys & SHA256 name hash algorithm, with object context saved in file context.out.
+tpm2_createprimary -c primary.ctx -P ***MY_PASSPHRASE**
+
+#> Create a RSA key under the previous primary key, with subobjectpass as the object password, with SHA256 name hash algorithm, with public portion saved in key.pub and private portion saved in key.priv
+tpm2_create -C primary.ctx -u key.pub -r key.priv
+
+#> Load the created RSA key
+tpm2_load  -C primary.ctx -u key.pub -r key.priv -c key.ctx -n key.name
+
+# Encrypt with RSA key
+tpm2_rsaencrypt -c key.ctx -o rpool.enc rpool.passphrase
+
+# Decrypt with RSA key
+#tpm2_rsaencrypt -c key.ctx -o rpool.enc rpool.passphras
+tpm2_rsadecrypt -c key.ctx rpool.enc
