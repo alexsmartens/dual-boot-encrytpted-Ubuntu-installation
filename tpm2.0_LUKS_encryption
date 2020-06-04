@@ -13,7 +13,8 @@ https://run.tournament.org.il/ubuntu-18-04-and-tpm2-encrypted-system-disk/
 
 sudo tpm2_nvdefine 0x1500016 -C 0x40000001 -s 64 -a 0x2000A
 # cat /dev/urandom | tr -dc ‘a-zA-Z0-9’ | fold -w 32 | head -n 1 > usb32.key
-pwgen 63 1 -s -y -r \`\'\" >> rpool.passphrase
+# pwgen 63 1 -s -y -r \`\'\" >> rpool.passphrase
+pwgen 50 1 -A -s | fold -w5 | echo $(cat) | tr " "  -
 
  # usb32.key
 # sudo cryptsetup luksAddKey /dev/sdb1 rpool.passphrase
