@@ -77,3 +77,6 @@ tpm2_rsaencrypt -c key.ctx -o rpool.pass rpool.enc
 # Decrypt with RSA key
 #tpm2_rsaencrypt -c key.ctx -o rpool.enc rpool.passphras
 tpm2_rsadecrypt -c key.ctx rpool.enc
+
+
+update-initramfs -u
