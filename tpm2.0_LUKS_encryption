@@ -66,13 +66,13 @@ tpm2_changeauth -c lockout ***MY_PASSPHRASE***
 tpm2_createprimary -c primary.ctx -P ***MY_PASSPHRASE**
 
 #> Create a RSA key under the previous primary key, with subobjectpass as the object password, with SHA256 name hash algorithm, with public portion saved in key.pub and private portion saved in key.priv
-cd bak
+tpm2_create -C primary.ctx -u key.pub -r key.priv
 
 #> Load the created RSA key
 tpm2_load  -C primary.ctx -u key.pub -r key.priv -c key.ctx -n key.name
 
 # Encrypt with RSA key
-cphrase
+tpm2_rsaencrypt -c key.ctx -o rpool.pass rpool.enc
 
 # Decrypt with RSA key
 #tpm2_rsaencrypt -c key.ctx -o rpool.enc rpool.passphras
