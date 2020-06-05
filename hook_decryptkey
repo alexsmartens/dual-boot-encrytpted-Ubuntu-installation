@@ -11,5 +11,5 @@ case $1 in
      ;;
 esac
 . /usr/share/initramfs-tools/hook-functions
-copy_exec usr/bin/tpm2_rsadecrypt
+copy_exec /usr/bin/tpm2_rsadecrypt
 exit 0
