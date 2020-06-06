@@ -78,4 +78,20 @@ tpm2_rsaencrypt -c key.ctx -o rpool.enc rpool.pass
 tpm2_rsadecrypt -c key.ctx rpool.enc
 
 
+
+
+
 update-initramfs -u
+
+
+
+
+
+https://github.com/tpm2-software/tpm2-tools/issues/1955#issuecomment-617952674
+tpm2_createprimary -c primary.ctx ***MY_PASSPHRASE***
+tpm2_create -C primary.ctx -Grsa2048 -u key.pub -r key.priv
+tpm2_flushcontext -t
+tpm2_load -C primary.ctx -u key.pub -r key.priv -c key.ctx -n key.name
+tpm2_rsaencrypt -c key.ctx -o rpool.enc rpool.pass
+tpm2_flushcontext -t
+tpm2_rsadecrypt -c key.ctx rpool.enc
