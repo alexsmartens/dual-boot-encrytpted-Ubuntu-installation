@@ -72,10 +72,9 @@ tpm2_create -C primary.ctx -u key.pub -r key.priv
 tpm2_load  -C primary.ctx -u key.pub -r key.priv -c key.ctx -n key.name
 
 # Encrypt with RSA key
-tpm2_rsaencrypt -c key.ctx -o rpool.pass rpool.enc
+tpm2_rsaencrypt -c key.ctx -o rpool.enc rpool.pass
 
 # Decrypt with RSA key
-#tpm2_rsaencrypt -c key.ctx -o rpool.enc rpool.passphras
 tpm2_rsadecrypt -c key.ctx rpool.enc
 
 
