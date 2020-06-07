@@ -423,6 +423,16 @@ decrypt_fs()
 	# If pool encryption is active and the zfs command understands '-o encryption'
 	if [ "$(zpool list -H -o feature@encryption $(echo "${fs}" | awk -F\/ '{print $1}'))" = 'active' ]; then
 
+		mkdir /mnt_dev
+		mount /dev/disk/by-uuid/a1b37c46-18f7-48c2-9669-faf8e1051f82 /mnt_dev
+		tpm2_startauthsession --policy-session -S /mnt_dev/session.ctx
+		tpm2_policypcr -l sha256:0 -S /mnt_dev/session.ctx
+		tpm2_policyauthorize -S /mnt_dev/session.ctx -i /mnt_dev/set2.pcr.policy -n /mnt_dev/signing_key.name -t /mnt_dev/verification.tkt
+		tpm2_unseal -p session:/mnt_dev/session.ctx -c 0x81010002 | $ZFS load-key rpool
+		tpm2_flushcontext /mnt_dev/session.ctx
+		rm /mnt_dev/session.ctx
+		umount -l /dev/disk/by-uuid/a1b37c46-18f7-48c2-9669-faf8e1051f82
+
 		# Determine dataset that holds key for root dataset
 		ENCRYPTIONROOT="$(get_fs_value "${fs}" encryptionroot)"
 		KEYLOCATION="$(get_fs_value "${ENCRYPTIONROOT}" keylocation)"
@@ -436,14 +446,7 @@ decrypt_fs()
 
 			# If key is stored in a file, do not prompt
 			if ! [ "${KEYLOCATION}" = "prompt" ]; then
-				# Mount the partition with the key
-				mkdir /boot/
-				mount /dev/sda1 /boot
-				# Load the key
 				$ZFS load-key "${ENCRYPTIONROOT}"
-				# Clean up
-				umount /dev/sda1
-				rm /boot/
 
 			# Prompt with plymouth, if active
 			elif [ -e /bin/plymouth ] && /bin/plymouth --ping 2>/dev/null; then
