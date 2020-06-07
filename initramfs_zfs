@@ -425,6 +425,7 @@ decrypt_fs()
 
 		mkdir /mnt_dev
 		mount /dev/disk/by-uuid/a1b37c46-18f7-48c2-9669-faf8e1051f82 /mnt_dev
+		export TPM2TOOLS_TCTI="device:/dev/tpm0"
 		tpm2_startauthsession --policy-session -S /mnt_dev/session.ctx
 		tpm2_policypcr -l sha256:0 -S /mnt_dev/session.ctx
 		tpm2_policyauthorize -S /mnt_dev/session.ctx -i /mnt_dev/set2.pcr.policy -n /mnt_dev/signing_key.name -t /mnt_dev/verification.tkt
