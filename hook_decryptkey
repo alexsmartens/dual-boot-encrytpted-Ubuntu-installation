@@ -11,5 +11,8 @@ case $1 in
      ;;
 esac
 . /usr/share/initramfs-tools/hook-functions
-copy_exec /usr/bin/tpm2_rsadecrypt
+copy_exec /usr/bin/tpm2_startauthsession
+copy_exec /usr/bin/tpm2_policypcr
+copy_exec /usr/bin/tpm2_policyauthorize
+copy_exec /usr/bin/tpm2_unseal
 exit 0
