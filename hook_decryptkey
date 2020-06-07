@@ -15,4 +15,5 @@ copy_exec /usr/bin/tpm2_startauthsession
 copy_exec /usr/bin/tpm2_policypcr
 copy_exec /usr/bin/tpm2_policyauthorize
 copy_exec /usr/bin/tpm2_unseal
+copy_exec /usr/bin/tpm2_flushcontext
 exit 0
