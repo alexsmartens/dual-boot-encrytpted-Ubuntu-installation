@@ -101,3 +101,6 @@ tpm2_load -C primary.ctx -u key.pub -r key.priv -c key.ctx -n key.name
 tpm2_rsaencrypt -c key.ctx -o rpool.enc rpool.pass
 tpm2_flushcontext -t
 tpm2_rsadecrypt -c key.ctx rpool.enc
+
+# Next steps
+# https://tpm2-software.github.io/2020/04/13/Disk-Encryption.html
