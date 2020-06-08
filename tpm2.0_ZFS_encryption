@@ -1,89 +1,77 @@
-## Step 1: Creating the password
+## Part 1: Creating the password
 pwgen 25 1 -A -s | fold -w5 | echo $(cat) | tr " "  - >> rpool.pass
 
-
-
-
-## Step 2
-
-https://www.reddit.com/r/zfs/comments/dimtjv/guide_setting_up_tpm2based_decryption_for_zfs_on/f49nvyf/
-
-# create primary.ctx
-tpm2_createprimary -c primary.ctx -T device:/dev/tpmrm0
-
-# create public/private keypair for decryption password saved at /tmp/pass.dat
-tpm2_create -C primary.ctx -u key.pub -r key.priv -i /tmp/pass.dat -T device:/dev/tpmrm0
-
-# load stuff into TPM2
-tpm2_load -C primary.ctx -u key.pub -r key.priv -c key.ctx -T device:/dev/tpmrm0
-
-# save handle key.ctx as TPM2 persistent handle at address 0x81010002
-tpm2_evictcontrol -C o -c key.ctx 0x81010002
+# You can use this passphrase when installing Ubuntu. If you did not do that, you would have to change your zfs passphrase to the one in rpool.pass before continuing
 
 
 
 
 
+## Part 2, based on https://tpm2-software.github.io/2020/04/13/Disk-Encryption.html
+#  Part 2.1 Taking ownership (optional)
+sudo tpm2_changeauth -c owner ***MY_PASSPHRASE***
+sudo tpm2_changeauth -c endorsement ***MY_PASSPHRASE*_ENDORSEMENT**
+sudo tpm2_changeauth -c lockout ***MY_PASSPHRASE_LOCKOUT***
+
+
+#  Part 2.2 Encryption
+# (1) Get a new set of PCR
+sudo tpm2_startauthsession -S session.ctx
+sudo tpm2_policypcr -Q -S session.ctx -l sha256:0 -L pcr0.sha256.policy
+sudo tpm2_flushcontext session.ctx
+
+# (2) Sign the pcr policy with signer private key
+openssl genrsa -out signing_key_private.pem 2048
+openssl rsa -in signing_key_private.pem -out signing_key_public.pem -pubout
+
+# (3) Initialize the policy name, which is a digest of the TCG public key format of the public key to include in the policy
+sudo tpm2_loadexternal -G rsa -C o -u signing_key_public.pem -c signing_key.ctx -n signing_key.name
+
+# (4) Create a signer policy
+sudo tpm2_startauthsession -S session.ctx
+sudo tpm2_policyauthorize -S session.ctx -L authorized.policy -n signing_key.name -i pcr0.sha256.policy
+sudo tpm2_flushcontext session.ctx
+
+# (5) Create primary object
+sudo tpm2_createprimary --hierarchy=o --key-algorithm=rsa --key-context=prim.ctx -P ***MY_PASSPHRASE***
+
+# If needed, check what handles of the persistent objects are in use (might be useful for the next step)
+sudo tpm2_getcap handles-persistent
+
+# (6) Create a sealing object with the authorized policy which will also require the sealing secret 
+cat rpool.pass | sudo tpm2_create -g sha256 -u auth_pcr_seal_key.pub -r auth_pcr_seal_key.priv -i- -C prim.ctx -L authorized.policy
+
+# (7) Create a new sealing object with the policy_authorize policy associated with signer public key
+sudo tpm2_load -Q -C prim.ctx -u auth_pcr_seal_key.pub -r auth_pcr_seal_key.priv -n auth_pcr_seal_key.name -c auth_pcr_seal_key.ctx
+# Make the created transient object persistent
+sudo tpm2_evictcontrol -c auth_pcr_seal_key.ctx 0x81010001 -C o -P ***MY_PASSPHRASE***
+
+# (8) Sign the pcr_policy with the signer private key
+openssl dgst -sha256 -sign signing_key_private.pem -out pcr0.signature pcr0.sha256.policy
+
+# (9) Load the signer public key to the tpm and verify the signature on the pcr and get the tpm verification tkt
+sudo tpm2_loadexternal -G rsa -C o -u signing_key_public.pem -c signing_key.ctx -n signing_key.name
+sudo tpm2_verifysignature -c signing_key.ctx -g sha256 -m pcr0.sha256.policy -s pcr0.signature -t verification.tkt -f rsassa
+
+
+# Part 2.3 Decryption
+# Satisfy the authorized policy and then run policyauthorize 
+sudo tpm2_startauthsession --policy-session -S session.ctx
+sudo tpm2_policypcr -l sha256:0 -S session.ctx
+sudo tpm2_policyauthorize -S session.ctx -i pcr0.sha256.policy -n signing_key.name -t verification.tkt
+# Unseal your passphrase
+sudo tpm2_unseal -p session:session.ctx -c 0x81010001
+sudo tpm2_flushcontext session.ctx
 
 
 
 
-https://run.tournament.org.il/ubuntu-18-04-and-tpm2-encrypted-system-disk/
 
-sudo tpm2_nvdefine 0x1500016 -C 0x40000001 -s 64 -a 0x2000A
-# cat /dev/urandom | tr -dc ‘a-zA-Z0-9’ | fold -w 32 | head -n 1 > usb32.key
-# pwgen 63 1 -s -y -r \`\'\" >> rpool.passphrase
+# Part 3 Loading ZFS pool passphrase on boot
+# (1) Add a custom scrypt /etc/initramfs-tools/hooks/decryptkey to copy required executables and libraries to initramfs 
+# (2) Add the decryption lines (Part 2.3) to /usr/share/initramfs-tools/scripts/zfs after the following line
+# `if [ "$(zpool list -H -o feature@encryption $(echo "${fs}" | awk -F\/ '{print $1}'))" = 'active' ]; then`
+# Note: you also need to reference here the location of files required for decryption
+# (3) Update initramfs
+sudo update-initramfs -u
 
-
- # usb32.key
-# sudo cryptsetup luksAddKey /dev/sdb1 rpool.passphrase
-sudo tpm2_nvread 0x1500016 -C 0x40000001
-
-
-$ cat my.passphrase rpool.passphrase | sudo cryptsetup luksAddKey /dev/sdc1
-{ echo "MY_PASSPHRASE"; cat rpool.passphrase; } | sudo cryptsetup luksAddKey /dev/sdc1
-
-# sudo blkid /dev/sdb1
-# cat rpool.passphrase | sudo cryptsetup open /dev/disk/by-uuid/a1b37c46-18f7-48c2-9669-faf8e1051f82 SECRET
-sudo tpm2_nvread 0x1500016 -C 0x40000001 | sudo cryptsetup open /dev/disk/by-uuid/a1b37c46-18f7-48c2-9669-faf8e1051f82 SECRET2
-sudo tpm2_nvread 0x1500016 -C 0x40000001 
-
-# Alternative
-mkdir /mnt_dev
-mount /dev/disk/by-uuid/a1b37c46-18f7-48c2-9669-faf8e1051f82 /mnt_dev
-tpm2_rsadecrypt -c /mnt_dev/key.ctx /mnt_dev/rpool.enc_old | $ZFS load-key rpool
-umount /dev/disk/by-uuid/a1b37c46-18f7-48c2-9669-faf8e1051f82
-rm -r /mnt_dev
-
-
-
-
-
-
-
-
-
-
-update-initramfs -u
-
-
-
-
-
-# # tpm2_rsadecrypt -c key.ctx rpool.enc
-# WARNING:esys:src/tss2-esys/api/Esys_ContextLoad.c:279:Esys_ContextLoad_Finish() Received TPM Error 
-# ERROR:esys:src/tss2-esys/api/Esys_ContextLoad.c:93:Esys_ContextLoad() Esys Finish ErrorCode (0x000001df) 
-# ERROR: Esys_ContextLoad(0x1DF) - tpm:parameter(1):integrity check failed
-# ERROR: Unable to run tpm2_rsadecrypt
-
-https://github.com/tpm2-software/tpm2-tools/issues/1955#issuecomment-617952674
-tpm2_createprimary -C o -c primary.ctx ***MY_PASSPHRASE***
-tpm2_create -C primary.ctx -Grsa2048 -u key.pub -r key.priv
-tpm2_flushcontext -t
-tpm2_load -C primary.ctx -u key.pub -r key.priv -c key.ctx -n key.name
-tpm2_rsaencrypt -c key.ctx -o rpool.enc rpool.pass
-tpm2_flushcontext -t
-tpm2_rsadecrypt -c key.ctx rpool.enc
-
-# Next steps
-# https://tpm2-software.github.io/2020/04/13/Disk-Encryption.html
