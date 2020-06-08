@@ -1,12 +1,31 @@
-https://security.stackexchange.com/questions/194081/use-tpm2-0-to-securely-decrypt-the-hard-drive-in-linux-unattended
-https://blog.dowhile0.org/2017/10/18/automatic-luks-volumes-unlocking-using-a-tpm2-chip/
-https://techrevelations.de/2019/02/04/tpm-encryption-in-fedora-linux/
-https://github.com/vchatterji/tpm2-luks
+## Step 1: Creating the password
+pwgen 25 1 -A -s | fold -w5 | echo $(cat) | tr " "  - >> rpool.pass
 
-https://community.spiceworks.com/topic/1970944-tpm-luks-bitlocker-full-disk-encryption-for-linux
-https://github.com/fox-it/linux-luks-tpm-boot
 
-https://github.com/tpm2-software/tpm2-tools/tree/master/doc
+
+
+## Step 2
+
+https://www.reddit.com/r/zfs/comments/dimtjv/guide_setting_up_tpm2based_decryption_for_zfs_on/f49nvyf/
+
+# create primary.ctx
+tpm2_createprimary -c primary.ctx -T device:/dev/tpmrm0
+
+# create public/private keypair for decryption password saved at /tmp/pass.dat
+tpm2_create -C primary.ctx -u key.pub -r key.priv -i /tmp/pass.dat -T device:/dev/tpmrm0
+
+# load stuff into TPM2
+tpm2_load -C primary.ctx -u key.pub -r key.priv -c key.ctx -T device:/dev/tpmrm0
+
+# save handle key.ctx as TPM2 persistent handle at address 0x81010002
+tpm2_evictcontrol -C o -c key.ctx 0x81010002
+
+
+
+
+
+
+
 
 
 https://run.tournament.org.il/ubuntu-18-04-and-tpm2-encrypted-system-disk/
@@ -14,7 +33,7 @@ https://run.tournament.org.il/ubuntu-18-04-and-tpm2-encrypted-system-disk/
 sudo tpm2_nvdefine 0x1500016 -C 0x40000001 -s 64 -a 0x2000A
 # cat /dev/urandom | tr -dc ‘a-zA-Z0-9’ | fold -w 32 | head -n 1 > usb32.key
 # pwgen 63 1 -s -y -r \`\'\" >> rpool.passphrase
-pwgen 25 1 -A -s | fold -w5 | echo $(cat) | tr " "  -
+
 
  # usb32.key
 # sudo cryptsetup luksAddKey /dev/sdb1 rpool.passphrase
@@ -38,44 +57,8 @@ rm -r /mnt_dev
 
 
 
-# https://github.com/tpm2-software/tpm2-tools/wiki/How-to-use-tpm2-tools
-# Updated commands:
-
-#> To list values for all available pcrs:
-tpm2_pcrread
-
-#> To list info about existing NV indices
-tpm2_nvreadpublic
-
-#> To list info about existing persistent objects
-# tpm2_getcap and tpm2_readpublic 
-
-#> To get a 20 bytes random number into file random.out:
-tpm2_getrandom 20 -o random.out
-
-#> To caculate the SHA1 hash value of file input.txt and output into hash.bin
-tpm2_hash -C e -g sha1 -o hash.bin input.txt
 
 
-#> Take ownership
-tpm2_changeauth -c owner ***MY_PASSPHRASE***
-tpm2_changeauth -c endorsement ***MY_PASSPHRASE***
-tpm2_changeauth -c lockout ***MY_PASSPHRASE***
-
-#> Create a Primary Object in endorsement hierarchy, with objectpass as the object password, with RSA keys & SHA256 name hash algorithm, with object context saved in file context.out.
-tpm2_createprimary -c primary.ctx -P ***MY_PASSPHRASE**
-
-#> Create a RSA key under the previous primary key, with subobjectpass as the object password, with SHA256 name hash algorithm, with public portion saved in key.pub and private portion saved in key.priv
-tpm2_create -C primary.ctx -u key.pub -r key.priv
-
-#> Load the created RSA key
-tpm2_load  -C primary.ctx -u key.pub -r key.priv -c key.ctx -n key.name
-
-# Encrypt with RSA key
-tpm2_rsaencrypt -c key.ctx -o rpool.enc rpool.pass
-
-# Decrypt with RSA key
-tpm2_rsadecrypt -c key.ctx rpool.enc
 
 
 
