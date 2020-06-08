@@ -1,0 +1,37 @@
+# https://github.com/tpm2-software/tpm2-tools/wiki/How-to-use-tpm2-tools
+# Updated tpm2-tools v4 commands:
+
+#> To list values for all available pcrs:
+tpm2_pcrread
+
+#> To list info about existing NV indices
+tpm2_nvreadpublic
+
+#> To list info about existing persistent objects
+# tpm2_getcap and tpm2_readpublic 
+
+#> To get a 20 bytes random number into file random.out:
+tpm2_getrandom 20 -o random.out
+
+#> To caculate the SHA1 hash value of file input.txt and output into hash.bin
+tpm2_hash -C e -g sha1 -o hash.bin input.txt
+
+#> Take ownership
+tpm2_changeauth -c owner ***MY_PASSPHRASE***
+tpm2_changeauth -c endorsement ***MY_PASSPHRASE***
+tpm2_changeauth -c lockout ***MY_PASSPHRASE***
+
+#> Create a Primary Object in endorsement hierarchy, with objectpass as the object password, with RSA keys & SHA256 name hash algorithm, with object context saved in file context.out.
+tpm2_createprimary -c primary.ctx -P ***MY_PASSPHRASE**
+
+#> Create a RSA key under the previous primary key, with subobjectpass as the object password, with SHA256 name hash algorithm, with public portion saved in key.pub and private portion saved in key.priv
+tpm2_create -C primary.ctx -u key.pub -r key.priv
+
+#> Load the created RSA key
+tpm2_load  -C primary.ctx -u key.pub -r key.priv -c key.ctx -n key.name
+
+# Encrypt with RSA key
+tpm2_rsaencrypt -c key.ctx -o rpool.enc rpool.pass
+
+# Decrypt with RSA key
+tpm2_rsadecrypt -c key.ctx rpool.enc
