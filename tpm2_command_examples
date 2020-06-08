@@ -9,6 +9,7 @@ tpm2_nvreadpublic
 
 #> To list info about existing persistent objects
 # tpm2_getcap and tpm2_readpublic 
+tpm2_getcap handles-persistent
 
 #> To get a 20 bytes random number into file random.out:
 tpm2_getrandom 20 -o random.out
