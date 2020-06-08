@@ -68,7 +68,7 @@ sudo tpm2_flushcontext session.ctx
 
 
 # Part 3 Loading ZFS pool passphrase on boot
-# (1) Add a custom scrypt /etc/initramfs-tools/hooks/decryptkey to copy required executables and libraries to initramfs 
+# (1) Add a custom script /etc/initramfs-tools/hooks/decryptkey to copy required executables and libraries to initramfs 
 # (2) Add the decryption lines (Part 2.3) to /usr/share/initramfs-tools/scripts/zfs after the following line
 # `if [ "$(zpool list -H -o feature@encryption $(echo "${fs}" | awk -F\/ '{print $1}'))" = 'active' ]; then`
 # Note: you also need to reference here the location of files required for decryption
