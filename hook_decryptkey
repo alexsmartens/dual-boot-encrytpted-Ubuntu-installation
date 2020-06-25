@@ -1,4 +1,6 @@
-#/etc/initramfs-tools/hooks/decryptkey
+# /etc/initramfs-tools/hooks/decryptkey
+# !! add permission to execute
+# https://run.tournament.org.il/ubuntu-18-04-and-tpm2-encrypted-system-disk/
 
 #!/bin/sh
 PREREQ=""
