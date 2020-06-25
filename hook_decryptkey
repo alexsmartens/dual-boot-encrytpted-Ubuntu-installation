@@ -15,10 +15,10 @@ case $1 in
      ;;
 esac
 . /usr/share/initramfs-tools/hook-functions
-copy_exec /lib/x86_64-linux-gnu/libtss2-tcti-device.so.0
 copy_exec /usr/bin/tpm2_startauthsession
 copy_exec /usr/bin/tpm2_policypcr
 copy_exec /usr/bin/tpm2_policyauthorize
 copy_exec /usr/bin/tpm2_unseal
 copy_exec /usr/bin/tpm2_flushcontext
+copy_exec /lib/x86_64-linux-gnu/libtss2-tcti-device.so.0
 exit 0
