@@ -429,7 +429,7 @@ decrypt_fs()
 		tpm2_startauthsession --policy-session -S /mnt_dev/session.ctx
 		tpm2_policypcr -l sha256:0 -S /mnt_dev/session.ctx
 		tpm2_policyauthorize -S /mnt_dev/session.ctx -i /mnt_dev/set2.pcr.policy -n /mnt_dev/signing_key.name -t /mnt_dev/verification.tkt
-		tpm2_unseal -p session:/mnt_dev/session.ctx -c 0x81010002 | $ZFS load-key rpool
+		tpm2_unseal -p session:/mnt_dev/session.ctx -c 0x81010001 | $ZFS load-key rpool
 		tpm2_flushcontext /mnt_dev/session.ctx
 		rm /mnt_dev/session.ctx
 		umount -l /dev/disk/by-uuid/a1b37c46-18f7-48c2-9669-faf8e1051f82
