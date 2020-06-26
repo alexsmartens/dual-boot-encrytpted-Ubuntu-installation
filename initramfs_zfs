@@ -428,7 +428,7 @@ decrypt_fs()
 		export TPM2TOOLS_TCTI="device:/dev/tpm0"
 		tpm2_startauthsession --policy-session -S /mnt_dev/session.ctx
 		tpm2_policypcr -l sha256:0 -S /mnt_dev/session.ctx
-		tpm2_policyauthorize -S /mnt_dev/session.ctx -i /mnt_dev/set2.pcr.policy -n /mnt_dev/signing_key.name -t /mnt_dev/verification.tkt
+		tpm2_policyauthorize -S /mnt_dev/session.ctx -i /mnt_dev/pcr0.sha256.policy -n /mnt_dev/signing_key.name -t /mnt_dev/verification.tkt
 		tpm2_unseal -p session:/mnt_dev/session.ctx -c 0x81010001 | $ZFS load-key rpool
 		tpm2_flushcontext /mnt_dev/session.ctx
 		rm /mnt_dev/session.ctx
